@@ -1,0 +1,20 @@
+{
+  "name": "Math Maze Game",
+  "short_name": "MathMaze",
+  "start_url": "maze.html",
+  "display": "standalone",
+  "background_color": "#111",
+  "theme_color": "#111",
+  "icons": [
+    {
+      "src": "image/ChatGPT Image Jun 2, 2025, 09_34_53 AM.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "image/ChatGPT Image Jun 2, 2025, 09_34_53 AM.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

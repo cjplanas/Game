@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Math Maze Game</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+      user-select: none;
+    }
+    #startScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: url('pixel-art-dungeon-background-8-bit-games_334978-15702.avif') no-repeat center center/cover;
+      color: white; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 20;
+      text-shadow: 2px 2px 8px black;
+    }
+    #startScreen button {
+      font-size: 20px; padding: 10px 20px; margin: 10px; cursor: pointer;
+      border: none; border-radius: 6px; background: rgba(0,0,0,0.6);
+      color: white;
+      transition: background 0.3s ease;
+    }
+    #startScreen button:hover {
+      background: rgba(0,0,0,0.9);
+    }
+    #gameContainer {
+      position: relative;
+      padding-top: 50px; /* space for menu button */
+      background-color: #111;
+      min-height: 100vh;
+    }
+    #statusBar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    #keyIcon {
+      font-size: 24px;
+      color: cyan;
+      display: none;
+    }
+    #hearts {
+      font-size: 24px;
+      color: red;
+    }
+    #score {
+      text-align: center;
+      font-size: 20px;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(21, 30px);
+      grid-template-rows: repeat(21, 30px);
+      gap: 1px;
+      margin: 0 auto 20px auto;
+      width: fit-content;
+    }
+    .tile {
+      width: 30px;
+      height: 30px;
+      text-align: center;
+      line-height: 30px;
+      background-color: #333;
+    }
+    .player {
+      background-image: url('standing.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .enemy {
+      background-image: url('New Piskel.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .enemy2 {
+      background-image: url('rat2.gif'); /* Use your new enemy image */
+      background-size: cover;
+      background-position: center;
+    }
+    .enemy3 {
+      background-image: url('Goblin_idle.gif'); /* Use your new enemy3 image */
+      background-size: cover;
+      background-position: center;
+    }
+    .chest {
+      background-image: url('chest.png');
+      background-size: cover;
+      background-position: center;
+    }
+    .door {
+      background-image: url('patrick-jones-door-removebg-preview.png');
+      background-size: cover;
+      background-position: center;
+    }
+    .boss {
+      background-image: url('f9fa6fb55ae4301740214a13163c26e2.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .wall { background-color: #222; }
+    .key { background-color: rgb(247, 231, 8); }
+    #questionBox {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #222;
+      padding: 20px;
+      border: 2px solid #fff;
+      z-index: 30;
+      width: 280px;
+      text-align: center;
+    }
+    #questionBox button {
+      cursor: pointer;
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background: gold;
+      color: #111;
+      font-weight: bold;
+    }
+    #timer {
+      color: orange;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    /* Menu button in top-left */
+    #menuBtn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 40;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 18px;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #checkpointBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 40;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 18px;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #menuPanel {
+      position: fixed;
+      top: 50px;
+      left: 10px;
+      background: rgba(0,0,0,0.85);
+      border-radius: 8px;
+      padding: 10px 15px;
+      display: none;
+      z-index: 40;
+      box-shadow: 0 0 10px black;
+    }
+    #menuPanel button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      background: crimson;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 0;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+    #menuPanel button:hover {
+      background: darkred;
+    }
+    .player-right {
+      background-image: url('run right.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .player-left {
+      background-image: url('run left.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .player-up {
+      background-image: url('run updown.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .player-down {
+      background-image: url('run updown.gif');
+      background-size: cover;
+      background-position: center;
+    }
+    .potion {
+      background-image: url('potion-removebg-preview.png'); /* Place your potion image in the project folder */
+      background-size: cover;
+      background-position: center;
+    }
+    /* Info modal styles */
+    #infoModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    #infoModal > div {
+      background: #222;
+      color: #fff;
+      padding: 30px 24px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: left;
+      box-shadow: 0 0 20px #000;
+    }
+    #infoModal h2 {
+      margin-top: 0;
+    }
+    #infoModal ul {
+      padding-left: 18px;
+    }
+    #infoModal button {
+      margin-top: 15px;
+      padding: 6px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background: gold;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    /* Victory screen styles */
+    #victoryScreen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      color: #fff;
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      font-family: inherit;
+      text-align: center;
+    }
+    #victoryScreen h1 {
+      font-size: 2.5em;
+      color: gold;
+      margin-bottom: 20px;
+    }
+    #victoryScreen h2 {
+      color: #0ff;
+      margin-bottom: 30px;
+    }
+    #victoryScreen p {
+      font-size: 1.3em;
+      margin-bottom: 40px;
+    }
+    #victoryScreen button {
+      font-size: 1.2em;
+      padding: 12px 32px;
+      border-radius: 8px;
+      border: none;
+      background: gold;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #mobileControls {
+      display: none;
+      position: fixed;
+      bottom: 30px;
+      left: 0;
+      width: 100vw;
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+    }
+    #mobileControls .arrowBtn {
+      width: 60px;
+      height: 60px;
+      font-size: 2em;
+      margin: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 30px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #mobileControls .arrowBtn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #questionBox input[type="number"] {
+  font-size: 1.5em;
+  padding: 8px;
+  width: 80px;
+  border-radius: 6px;
+  border: 1px solid #888;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 700px) {
+  #questionBox input[type="number"] {
+    font-size: 5vw;
+    width: 40vw;
+    padding: 2vw;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+  <div id="startScreen">
+    <h1>Welcome to Mind Maze Game</h1>
+    <button id="startBtn">Start the Adventure</button>
+    <button id="quitBtn">Quit Game</button>
+    <button id="infoBtn">ℹ️ Info</button>
+  </div>
+
+  <div id="gameContainer" style="display:none;">
+    <button id="menuBtn">☰ Menu</button>
+    <button id="checkpointBtn">Check point</button>
+    <div id="menuPanel">
+      <button id="menuQuitBtn">Quit Game</button>
+    </div>
+    <h2 style="text-align:center;">Math Maze Game - Level <span id="levelNum">1</span></h2>
+    <div id="statusBar">
+      <div id="hearts">❤️❤️❤️❤️❤️</div>
+      <div id="keyIcon">🔑</div>
+    </div>
+    <div id="score">Score: 0</div>
+    <div id="game"></div>
+    <div id="questionBox">
+      <p id="questionText"></p>
+      <input type="number" id="answer" />
+      <button onclick="submitAnswer()">Submit</button>
+      <div id="timer">Time left: 30s</div>
+    </div>
+  </div>
+
+  <div id="infoModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:100; justify-content:center; align-items:center;">
+    <div style="background:#222; color:#fff; padding:30px 24px; border-radius:12px; max-width:400px; text-align:left; box-shadow:0 0 20px #000;">
+      <h2 style="margin-top:0;">How to Play</h2>
+      <ul style="padding-left:18px;">
+        <li>Use the <b>arrow keys</b> to move your character through the maze.</li>
+        <li>Defeat enemies by answering math questions. <br>
+          <span style="color:orange;">Wrong answers cost a heart. Correct answers earn points!</span>
+        </li>
+        <li>To go to the next level, you must collect the <b>key</b> by opening a chest (answer its question), then open the door.</li>
+        <li>The <b>Check point</b> button (top right) lets you save and return to your progress every 5 levels. You can only use a checkpoint if you have already passed that level.</li>
+        <li>Every 10th level has a <b>boss</b>. To defeat a boss, you must answer <b>5 questions</b> correctly. The higher the level, the harder the questions!</li>
+        <li>Potions restore a heart. Only one potion appears per level.</li>
+        <li>Let’s see if you can defeat all my minions and reach the highest level!</li>
+      </ul>
+      <button id="closeInfoBtn" style="margin-top:15px; padding:6px 18px; font-size:16px; border-radius:6px; border:none; background:gold; color:#111; font-weight:bold; cursor:pointer;">Close</button>
+    </div>
+  </div>
+
+  <div id="victoryScreen" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); color:#fff; z-index:200; justify-content:center; align-items:center; flex-direction:column; font-family:inherit; text-align:center;">
+    <h1 style="font-size:2.5em; color: gold; margin-bottom: 20px;">You have managed to finish the Mind Maze!</h1>
+    <h2 style="color: #0ff; margin-bottom: 30px;">You are now a true Adventurer</h2>
+    <p style="font-size:1.3em; margin-bottom: 40px;">Congratulations, you defeated the game!</p>
+    <button id="victoryRestartBtn" style="font-size:1.2em; padding:12px 32px; border-radius:8px; border:none; background:gold; color:#111; font-weight:bold; cursor:pointer;">Play Again</button>
+  </div>
+
+  <div id="mobileControls" style="display:none; position:fixed; bottom:30px; left:0; width:100vw; z-index:50; justify-content:center; align-items:center;">
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <button class="arrowBtn" id="arrowUp" style="width:60px; height:60px; font-size:2em; margin-bottom:8px;">▲</button>
+      <div>
+        <button class="arrowBtn" id="arrowLeft" style="width:60px; height:60px; font-size:2em; margin-right:8px;">◀</button>
+        <button class="arrowBtn" id="arrowDown" style="width:60px; height:60px; font-size:2em; margin-right:8px;">▼</button>
+        <button class="arrowBtn" id="arrowRight" style="width:60px; height:60px; font-size:2em;">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="moveSound" src="walking-sound-effect-272246.mp3" preload="auto"></audio>
+  <audio id="correctSound" src="correct-6033.mp3" preload="auto"></audio>
+  <audio id="wrongSound" src="wrong-answer-129254.mp3" preload="auto"></audio>
+  <audio id="bgMusic" src="au-chateau-de-langeais-307767.mp3" preload="auto" loop></audio>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+<script>
+  const game = document.getElementById('game');
+  const questionBox = document.getElementById('questionBox');
+  const questionText = document.getElementById('questionText');
+  const answerInput = document.getElementById('answer');
+  const levelNumDisplay = document.getElementById('levelNum');
+  const heartsDisplay = document.getElementById('hearts');
+  const scoreDisplay = document.getElementById('score');
+  const keyIcon = document.getElementById('keyIcon');
+  const moveSound = document.getElementById('moveSound');
+  const correctSound = document.getElementById('correctSound');
+  const wrongSound = document.getElementById('wrongSound');
+  const startScreen = document.getElementById('startScreen');
+  const startBtn = document.getElementById('startBtn');
+  const quitBtn = document.getElementById('quitBtn');
+  const timerDisplay = document.getElementById('timer');
+  const gameContainer = document.getElementById('gameContainer');
+  const menuBtn = document.getElementById('menuBtn');
+  const menuPanel = document.getElementById('menuPanel');
+  const menuQuitBtn = document.getElementById('menuQuitBtn');
+  const bgMusic = document.getElementById('bgMusic');
+  const checkpointBtn = document.getElementById('checkpointBtn');
+  const infoBtn = document.getElementById('infoBtn');
+  const infoModal = document.getElementById('infoModal');
+  const closeInfoBtn = document.getElementById('closeInfoBtn');
+  let victoryScreen = null;
+
+  const width = 21;
+  const height = 21;
+  const tiles = [];
+  let playerPos = 0;
+  let hasKey = false;
+  let pendingAction = null;
+  let currentAnswer = 0;
+  let currentLevel = 0;
+  let hearts = 5;
+  let score = 0;
+  let timerInterval = null;
+  let timeLeft = 30;
+  let playerDirection = 'down'; // default direction
+
+  // --- Checkpoint Levels ---
+  const checkpointLevels = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+  let checkpoint = null;
+
+  // Save checkpoint: only at allowed levels and if player reached/passed it
+  function saveCheckpoint() {
+    // Find the highest checkpoint level the player has reached or passed
+    const available = checkpointLevels.filter(lvl => currentLevel + 1 >= lvl);
+    if (available.length === 0) {
+      alert('No checkpoint available yet!');
+      return;
+    }
+    const lastCheckpointLevel = Math.max(...available);
+    checkpoint = {
+      playerPos,
+      currentLevel: lastCheckpointLevel - 1, // -1 because level is 0-based
+      hearts,
+      score,
+      hasKey
+    };
+    alert(`Checkpoint at level ${lastCheckpointLevel} saved!`);
+  }
+
+  // Restore checkpoint: only if checkpoint exists and player has reached/passed it
+  function restoreCheckpoint() {
+    if (!checkpoint) {
+      alert('No checkpoint set yet!');
+      return;
+    }
+    if (currentLevel < checkpoint.currentLevel) {
+      alert('You have not reached this checkpoint yet!');
+      return;
+    }
+    playerPos = checkpoint.playerPos;
+    currentLevel = checkpoint.currentLevel;
+    hearts = checkpoint.hearts;
+    score = checkpoint.score;
+    hasKey = checkpoint.hasKey;
+    generateLevel(currentLevel);
+    alert(`Returned to checkpoint at level ${currentLevel + 1}!`);
+  }
+
+  // BFS function to find reachable floor tiles from a start position
+  function getReachablePositions(maze, startX, startY) {
+    const visited = Array(height).fill(null).map(() => Array(width).fill(false));
+    const queue = [{x: startX, y: startY}];
+    visited[startY][startX] = true;
+    const reachable = [];
+
+    while (queue.length > 0) {
+      const {x, y} = queue.shift();
+      reachable.push({x, y});
+      const neighbors = [
+        {x: x + 1, y},
+        {x: x - 1, y},
+        {x, y: y + 1},
+        {x, y: y - 1},
+      ];
+      neighbors.forEach(({x: nx, y: ny}) => {
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+          if (!visited[ny][nx] && maze[ny][nx] === ' ') {
+            visited[ny][nx] = true;
+            queue.push({x: nx, y: ny});
+          }
+        }
+      });
+    }
+    return reachable;
+  }
+
+  function generatePacmanLikeMaze() {
+    const maze = Array.from({ length: height }, () => Array(width).fill('W'));
+
+    function carve(x, y) {
+      maze[y][x] = ' ';
+      const directions = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
+      for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1) {
+          if (maze[ny][nx] === 'W') {
+            maze[ny - dy / 2][nx - dx / 2] = ' ';
+            carve(nx, ny);
+          }
+        }
+      }
+    }
+
+    carve(1, 1);
+
+    // Ensure all floor tiles are reachable from (1,1)
+    const reachable = getReachablePositions(maze, 1, 1);
+    // Mark unreachable tiles as walls to avoid isolated areas
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (maze[y][x] === ' ' && !reachable.some(pos => pos.x === x && pos.y === y)) {
+          maze[y][x] = 'W';
+        }
+      }
+    }
+    return maze;
+  }
+
+  // Maze generation and enemy/chest/door/boss placement
+  function generateLevel(level) {
+    // Generate maze
+    const maze = generatePacmanLikeMaze();
+
+    // Place player at (1,1) guaranteed floor
+    playerPos = 1 * width + 1;
+    hasKey = false;
+
+    // Clear previous tiles
+    tiles.length = 0;
+    game.innerHTML = '';
+
+    // Place enemies, chests, door, boss every 10 levels
+    const floorPositions = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (maze[y][x] === ' ') floorPositions.push({x, y});
+      }
+    }
+
+    // Place door near bottom-right floor tile, or fallback to last floor tile
+    let doorPos = floorPositions.find(p => p.x === width - 2 && p.y === height - 2) || floorPositions[floorPositions.length - 1];
+    const doorIndex = doorPos.y * width + doorPos.x;
+
+    // Place enemies and chests randomly on floor tiles not near player or door
+    const forbiddenPositions = new Set([playerPos, doorIndex]);
+    function posToIndex(pos) { return pos.y * width + pos.x; }
+
+    // Helper: randomly pick floor tile excluding forbidden
+    function pickRandomFloor(excludeSet) {
+      const candidates = floorPositions.filter(p => !excludeSet.has(posToIndex(p)));
+      if (candidates.length === 0) return null;
+      const choice = candidates[Math.floor(Math.random() * candidates.length)];
+      excludeSet.add(posToIndex(choice));
+      return choice;
+    }
+
+    // We'll place about 5 enemies and 3 chests per level
+    const enemies = [];
+    const chests = [];
+    const enemies2 = [];
+    const enemies3 = [];
+    const potions = [];
+
+    // Level 1-50: only enemy and enemy2
+    // Level 51-100: only enemy2 and enemy3
+    if (level < 50) {
+      for(let i = 0; i < 4; i++) {
+        const pos = pickRandomFloor(forbiddenPositions);
+        if (pos) enemies.push(pos);
+      }
+      for(let i = 0; i < 2; i++) {
+        const pos = pickRandomFloor(forbiddenPositions);
+        if (pos) enemies2.push(pos);
+      }
+    } else {
+      for(let i = 0; i < 4; i++) {
+        const pos = pickRandomFloor(forbiddenPositions);
+        if (pos) enemies2.push(pos);
+      }
+      for(let i = 0; i < 2; i++) {
+        const pos = pickRandomFloor(forbiddenPositions);
+        if (pos) enemies3.push(pos);
+      }
+    }
+    for(let i = 0; i < 1; i++) {
+      const pos = pickRandomFloor(forbiddenPositions);
+      if (pos) chests.push(pos);
+    }
+    for(let i = 0; i < 1; i++) { // Only one potion per level
+      const pos = pickRandomFloor(forbiddenPositions);
+      if (pos) potions.push(pos);
+    }
+    // Place boss every 10th level
+    let boss = null;
+    let bossImage = 'f9fa6fb55ae4301740214a13163c26e2.gif'; // default boss image
+
+    if ((level + 1) % 10 === 0) {
+      boss = pickRandomFloor(forbiddenPositions);
+      // Use a different image for each special boss level
+      const bossImages = {
+        10: 'boss10-unscreen.gif',
+        20: 'boss-20-unscreen.gif',
+        30: 'boss30-unscreen.gif',
+        40: 'boss 40.gif',
+        50: 'boss50.gif',
+        60: 'boss60-unscreen.gif',
+        70: 'level70boss-unscreen.gif',
+        80: 'level80boss-unscreen.gif',
+        90: 'level-90-boss-unscreen.gif',
+        100: 'boss100-unscreen.gif'
+      };
+      const bossLevel = level + 1;
+      if (bossImages[bossLevel]) {
+        bossImage = bossImages[bossLevel];
+      }
+    }
+
+    // Create tiles grid
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = y * width + x;
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        if (maze[y][x] === 'W') {
+          tile.classList.add('wall');
+        } else if (playerPos === idx) {
+          tile.classList.add('player');
+        } else if (enemies.some(e => e.x === x && e.y === y)) {
+          tile.classList.add('enemy');
+        } else if (enemies2.some(e => e.x === x && e.y === y)) {
+          tile.classList.add('enemy2');
+        } else if (enemies3.some(e => e.x === x && e.y === y)) {
+          tile.classList.add('enemy3');
+        } else if (chests.some(c => c.x === x && c.y === y)) {
+          tile.classList.add('chest');
+        } else if (boss && boss.x === x && boss.y === y) {
+          tile.classList.add('boss');
+          tile.style.backgroundImage = `url('${bossImage}')`; // Use special boss image
+        } else if (doorIndex === idx) {
+          tile.classList.add('door');
+        } else if (potions.some(p => p.x === x && p.y === y)) {
+          tile.classList.add('potion');
+        }
+        tiles.push(tile);
+        game.appendChild(tile);
+      }
+    }
+
+    // Reset UI
+    keyIcon.style.display = 'none';
+    heartsDisplay.textContent = '❤️'.repeat(hearts);
+    levelNumDisplay.textContent = level + 1;
+    scoreDisplay.textContent = `Score: ${score}`;
+  }
+
+  function movePlayer(dx, dy) {
+    if (dx === 1 && dy === 0) playerDirection = 'right';
+    else if (dx === -1 && dy === 0) playerDirection = 'left';
+    else if (dx === 0 && dy === -1) playerDirection = 'up';
+    else if (dx === 0 && dy === 1) playerDirection = 'down';
+
+    const x = playerPos % width;
+    const y = Math.floor(playerPos / width);
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || nx >= width || ny < 0 || ny >= height) return;
+    const targetTile = tiles[ny * width + nx];
+    if (targetTile.classList.contains('wall')) return;
+
+    // Check enemy
+    if (targetTile.classList.contains('enemy')) {
+      pendingAction = {type: 'enemy', pos: ny * width + nx};
+      showQuestion();
+      return;
+    }
+
+    // Check new enemy type
+    if (targetTile.classList.contains('enemy2')) {
+      pendingAction = {type: 'enemy2', pos: ny * width + nx};
+      showQuestion(false, true);
+      return;
+    }
+
+    // Check another new enemy type
+    if (targetTile.classList.contains('enemy3')) {
+      pendingAction = {type: 'enemy3', pos: ny * width + nx};
+      showQuestion(false, false, true); // Pass a flag for enemy3
+      return;
+    }
+
+    // Check chest
+    if (targetTile.classList.contains('chest')) {
+      pendingAction = {type: 'chest', pos: ny * width + nx};
+      showQuestion();
+      return;
+    }
+
+    // Check door
+    if (targetTile.classList.contains('door')) {
+      // Check if all enemies are defeated
+      const enemiesLeft = tiles.some(tile =>
+        tile.classList.contains('enemy') ||
+        tile.classList.contains('enemy2') ||
+        tile.classList.contains('enemy3') ||
+        tile.classList.contains('boss')
+      );
+      if (enemiesLeft) {
+        alert('Defeat all enemies before moving to the next level!');
+        return;
+      }
+      if (hasKey) {
+        // Require question to proceed to next level
+        pendingAction = {type: 'door', pos: ny * width + nx};
+        showQuestion();
+        return;
+      } else {
+        // Allow walking through door tile with no key, no question
+        updatePlayerPosition(nx, ny);
+        return;
+      }
+    }
+
+    // Check boss
+    if (targetTile.classList.contains('boss')) {
+      pendingAction = {type: 'boss', pos: ny * width + nx};
+      showQuestion(true); // boss fight with harder questions
+      return;
+    }
+
+    // Check potion
+    if (targetTile.classList.contains('potion')) {
+      // Instantly recover heart, no question needed
+      tiles[ny * width + nx].classList.remove('potion');
+      if (hearts < 5) {
+        hearts++;
+        heartsDisplay.textContent = '❤️'.repeat(hearts);
+      }
+      score += 5; // Optional: reward for picking up potion
+      scoreDisplay.textContent = `Score: ${score}`;
+      updatePlayerPosition(nx, ny);
+      return;
+    }
+
+    // Move player
+    updatePlayerPosition(nx, ny);
+  }
+
+  function updatePlayerPosition(x, y) {
+    const playerTile = tiles[playerPos];
+    playerTile.classList.remove('player', 'player-right', 'player-left', 'player-up', 'player-down');
+    playerPos = y * width + x;
+    const newTile = tiles[playerPos];
+    newTile.classList.add('player', `player-${playerDirection}`);
+
+    // Play move sound only if not already playing
+    if (moveSound.paused) {
+      moveSound.currentTime = 0;
+      moveSound.play();
+    }
+  }
+
+  // Stop move sound when not moving (i.e., after arrow key is released)
+  window.addEventListener('keyup', (e) => {
+    if (
+      e.key === 'ArrowUp' ||
+      e.key === 'ArrowDown' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight'
+    ) {
+      moveSound.pause();
+      moveSound.currentTime = 0;
+    }
+  });
+
+  // --- Harder questions and square root support ---
+  function showQuestion(isBoss = false, isEnemy2 = false, isEnemy3 = false) {
+    questionBox.style.display = 'block';
+
+    // Determine difficulty by level
+    let difficulty = 1;
+    if (currentLevel >= 90) difficulty = 5;
+    else if (currentLevel >= 70) difficulty = 4;
+    else if (currentLevel >= 50) difficulty = 3;
+    else if (currentLevel >= 30) difficulty = 2;
+
+    // Add sqrt as a possible operation at higher difficulties
+    let operations = ['+', '-', '*', '/'];
+    if (difficulty >= 2) operations.push('√');
+
+    const op = operations[Math.floor(Math.random() * operations.length)];
+    let a, b;
+
+    if (op === '√') {
+      // Square root: pick a perfect square
+      let min = 2, max = 10 + difficulty * 5;
+      let root = Math.floor(Math.random() * (max - min + 1)) + min;
+      a = root * root;
+      currentAnswer = root;
+      questionText.textContent = `What is the square root of ${a}?`;
+    } else if (isBoss) {
+      // Boss harder questions (bigger numbers)
+      switch(op) {
+        case '+':
+          a = Math.floor(Math.random() * 50 * difficulty) + 10;
+          b = Math.floor(Math.random() * 50 * difficulty) + 10;
+          currentAnswer = a + b;
+          questionText.textContent = `Boss fight! What is ${a} + ${b}?`;
+          break;
+        case '-':
+          a = Math.floor(Math.random() * 50 * difficulty) + 20;
+          b = Math.floor(Math.random() * a) + 10;
+          currentAnswer = a - b;
+          questionText.textContent = `Boss fight! What is ${a} - ${b}?`;
+          break;
+        case '*':
+          a = Math.floor(Math.random() * 20 * difficulty) + 5;
+          b = Math.floor(Math.random() * 10 * difficulty) + 2;
+          currentAnswer = a * b;
+          questionText.textContent = `Boss fight! What is ${a} × ${b}?`;
+          break;
+        case '/':
+          b = Math.floor(Math.random() * 20 * difficulty) + 2;
+          currentAnswer = Math.floor(Math.random() * 20 * difficulty) + 2;
+          a = currentAnswer * b;
+          questionText.textContent = `Boss fight! What is ${a} ÷ ${b}?`;
+          break;
+      }
+    } else if (isEnemy3) {
+      // Hardest for enemy3
+      switch(op) {
+        case '+':
+          a = Math.floor(Math.random() * 100 * difficulty) + 25;
+          b = Math.floor(Math.random() * 100 * difficulty) + 25;
+          currentAnswer = a + b;
+          questionText.textContent = `Enemy 3! What is ${a} + ${b}?`;
+          break;
+        case '-':
+          a = Math.floor(Math.random() * 100 * difficulty) + 25;
+          b = Math.floor(Math.random() * a) + 10;
+          currentAnswer = a - b;
+          questionText.textContent = `Enemy 3! What is ${a} - ${b}?`;
+          break;
+        case '*':
+          a = Math.floor(Math.random() * 40 * difficulty) + 10;
+          b = Math.floor(Math.random() * 20 * difficulty) + 5;
+          currentAnswer = a * b;
+          questionText.textContent = `Enemy 3! What is ${a} × ${b}?`;
+          break;
+        case '/':
+          b = Math.floor(Math.random() * 30 * difficulty) + 3;
+          currentAnswer = Math.floor(Math.random() * 30 * difficulty) + 3;
+          a = currentAnswer * b;
+          questionText.textContent = `Enemy 3! What is ${a} ÷ ${b}?`;
+          break;
+        case '√':
+          let min3 = 2, max3 = 15 + difficulty * 10;
+          let root3 = Math.floor(Math.random() * (max3 - min3 + 1)) + min3;
+          a = root3 * root3;
+          currentAnswer = root3;
+          questionText.textContent = `Enemy 3! What is the square root of ${a}?`;
+          break;
+      }
+    } else if (isEnemy2) {
+      // Harder for enemy2
+      switch(op) {
+        case '+':
+          a = Math.floor(Math.random() * 40 * difficulty) + 10;
+          b = Math.floor(Math.random() * 40 * difficulty) + 10;
+          currentAnswer = a + b;
+          questionText.textContent = `Enemy 2! What is ${a} + ${b}?`;
+          break;
+        case '-':
+          a = Math.floor(Math.random() * 40 * difficulty) + 10;
+          b = Math.floor(Math.random() * a) + 5;
+          currentAnswer = a - b;
+          questionText.textContent = `Enemy 2! What is ${a} - ${b}?`;
+          break;
+        case '*':
+          a = Math.floor(Math.random() * 20 * difficulty) + 5;
+          b = Math.floor(Math.random() * 10 * difficulty) + 2;
+          currentAnswer = a * b;
+          questionText.textContent = `Enemy 2! What is ${a} × ${b}?`;
+          break;
+        case '/':
+          b = Math.floor(Math.random() * 20 * difficulty) + 2;
+          currentAnswer = Math.floor(Math.random() * 20 * difficulty) + 2;
+          a = currentAnswer * b;
+          questionText.textContent = `Enemy 2! What is ${a} ÷ ${b}?`;
+          break;
+        case '√':
+          let min2 = 2, max2 = 12 + difficulty * 7;
+          let root2 = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+          a = root2 * root2;
+          currentAnswer = root2;
+          questionText.textContent = `Enemy 2! What is the square root of ${a}?`;
+          break;
+      }
+    } else {
+      // Normal enemy/chest questions
+      switch(op) {
+        case '+':
+          a = Math.floor(Math.random() * 10 * difficulty) + 1;
+          b = Math.floor(Math.random() * 10 * difficulty) + 1;
+          currentAnswer = a + b;
+          questionText.textContent = `What is ${a} + ${b}?`;
+          break;
+        case '-':
+          a = Math.floor(Math.random() * 10 * difficulty) + 1;
+          b = Math.floor(Math.random() * a) + 1;
+          currentAnswer = a - b;
+          questionText.textContent = `What is ${a} - ${b}?`;
+          break;
+        case '*':
+          a = Math.floor(Math.random() * 10 * difficulty) + 1;
+          b = Math.floor(Math.random() * 10 * difficulty) + 1;
+          currentAnswer = a * b;
+          questionText.textContent = `What is ${a} × ${b}?`;
+          break;
+        case '/':
+          b = Math.floor(Math.random() * 9 * difficulty) + 1;
+          currentAnswer = Math.floor(Math.random() * 10 * difficulty) + 1;
+          a = currentAnswer * b;
+          questionText.textContent = `What is ${a} ÷ ${b}?`;
+          break;
+        case '√':
+          let min1 = 2, max1 = 8 + difficulty * 4;
+          let root1 = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
+          a = root1 * root1;
+          currentAnswer = root1;
+          questionText.textContent = `What is the square root of ${a}?`;
+          break;
+      }
+    }
+
+    answerInput.value = '';
+    answerInput.focus();
+
+    timeLeft = 30;
+    timerDisplay.textContent = `Time left: ${timeLeft}s`;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = `Time left: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        wrongAnswer();
+      }
+    }, 1000);
+  }
+
+  function submitAnswer() {
+    const userAnswer = Number(answerInput.value);
+    clearInterval(timerInterval);
+    questionBox.style.display = 'none';
+
+    if (userAnswer === currentAnswer) {
+      correctSound.currentTime = 0;
+      correctSound.play();
+      if (!pendingAction) return;
+      switch(pendingAction.type) {
+        case 'enemy':
+          // Remove enemy tile
+          tiles[pendingAction.pos].classList.remove('enemy');
+          score += 10;
+          scoreDisplay.textContent = `Score: ${score}`;
+          break;
+        case 'enemy2':
+          // Remove enemy2 tile
+          tiles[pendingAction.pos].classList.remove('enemy2');
+          score += 25;
+          scoreDisplay.textContent = `Score: ${score}`;
+          break;
+        case 'enemy3':
+          // Remove enemy3 tile
+          tiles[pendingAction.pos].classList.remove('enemy3');
+          score += 40; // Even more points for enemy3
+          scoreDisplay.textContent = `Score: ${score}`;
+          break;
+        case 'chest':
+          // Remove chest, gain key
+          tiles[pendingAction.pos].classList.remove('chest');
+          hasKey = true;
+          keyIcon.style.display = 'inline';
+          score += 20;
+          scoreDisplay.textContent = `Score: ${score}`;
+          break;
+        case 'boss':
+          bossQuestionCount++;
+          if (bossQuestionCount < bossTargetQuestions) {
+            pendingAction = {type: 'boss', pos: pendingAction.pos};
+            showQuestion(true);
+            alert(`Correct! ${bossTargetQuestions - bossQuestionCount} more to defeat the boss!`);
+            return;
+          } else {
+            // Remove boss tile, check for level 100
+            tiles[pendingAction.pos].classList.remove('boss');
+            score += 100;
+            scoreDisplay.textContent = `Score: ${score}`;
+            bossQuestionCount = 0;
+            if (currentLevel + 1 === 100) {
+              // Show victory screen
+              document.getElementById('gameContainer').style.display = 'none';
+              victoryScreen.style.display = 'flex';
+              pendingAction = null;
+              return;
+            }
+            currentLevel += 1;
+            generateLevel(currentLevel);
+            pendingAction = null;
+            return;
+          }
+          break;
+        case 'door':
+          // Correct answer on door: go to next level
+          currentLevel++;
+          generateLevel(currentLevel);
+          pendingAction = null;
+          return;
+      }
+      // Move player onto the tile
+      updatePlayerPosition(pendingAction.pos % width, Math.floor(pendingAction.pos / width));
+      pendingAction = null;
+    } else {
+      wrongAnswer();
+    }
+  }
+
+  function wrongAnswer() {
+    hearts--;
+    heartsDisplay.textContent = '❤️'.repeat(hearts);
+    wrongSound.currentTime = 0;
+    wrongSound.play();
+    pendingAction = null;
+    if (hearts <= 0) {
+      alert('Game over! Your score: ' + score);
+      resetGame();
+    }
+  }
+
+  function resetGame() {
+    hearts = 5;
+    score = 0;
+    currentLevel = 0;
+    hasKey = false;
+    keyIcon.style.display = 'none';
+    heartsDisplay.textContent = '❤️'.repeat(hearts);
+    scoreDisplay.textContent = `Score: ${score}`;
+    levelNumDisplay.textContent = currentLevel + 1;
+    startScreen.style.display = 'flex';
+    gameContainer.style.display = 'none';
+    clearInterval(timerInterval);
+    questionBox.style.display = 'none';
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+  }
+
+  // When player clicks the checkpoint button, offer to save or return
+  checkpointBtn.addEventListener('click', () => {
+    // Only allow using checkpoint if player has reached/passed a checkpoint level
+    const available = checkpointLevels.filter(lvl => currentLevel + 1 >= lvl);
+    if (available.length === 0) {
+      alert('No checkpoint available yet!');
+      return;
+    }
+    if (!checkpoint || currentLevel > checkpoint.currentLevel) {
+      // Save new checkpoint
+      saveCheckpoint();
+    } else {
+      // Offer to return to checkpoint
+      if (confirm('Return to your last checkpoint? (You will lose progress after that point)')) {
+        restoreCheckpoint();
+      }
+    }
+  });
+
+  startBtn.addEventListener('click', () => {
+    startScreen.style.display = 'none';
+    gameContainer.style.display = 'block';
+    generateLevel(currentLevel);
+    bgMusic.play();
+  });
+
+  quitBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to quit?')) {
+      resetGame();
+    }
+  });
+
+  menuBtn.addEventListener('click', () => {
+    menuPanel.style.display = menuPanel.style.display === 'block' ? 'none' : 'block';
+  });
+
+  menuQuitBtn.addEventListener('click', () => {
+    if (confirm('Quit the game?')) {
+      resetGame();
+    }
+  });
+
+  infoBtn.addEventListener('click', () => {
+    infoModal.style.display = 'flex';
+  });
+
+  closeInfoBtn.addEventListener('click', () => {
+    infoModal.style.display = 'none';
+  });
+  infoModal.addEventListener('click', (e) => {
+    if (e.target === infoModal) infoModal.style.display = 'none';
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    victoryScreen = document.createElement('div');
+    victoryScreen.id = 'victoryScreen';
+    victoryScreen.style = `
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.95); color: #fff; z-index: 200; justify-content: center; align-items: center; flex-direction: column;
+      font-family: inherit; text-align: center;
+    `;
+    victoryScreen.innerHTML = `
+      <h1 style="font-size:2.5em; color: gold; margin-bottom: 20px;">You have managed to finish the Mind Maze!</h1>
+      <h2 style="color: #0ff; margin-bottom: 30px;">You are now a true Adventurer</h2>
+      <p style="font-size:1.3em; margin-bottom: 40px;">Congratulations, you defeated the game!</p>
+      <button id="victoryRestartBtn" style="font-size:1.2em; padding:12px 32px; border-radius:8px; border:none; background:gold; color:#111; font-weight:bold; cursor:pointer;">Play Again</button>
+    `;
+    document.body.appendChild(victoryScreen);
+
+    document.getElementById('victoryRestartBtn').onclick = () => {
+      victoryScreen.style.display = 'none';
+      resetGame();
+    };
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (questionBox.style.display === 'block') {
+      if (e.key === 'Enter') {
+        submitAnswer();
+      }
+      return;
+    }
+    switch(e.key) {
+      case 'ArrowUp': movePlayer(0, -1); break;
+      case 'ArrowDown': movePlayer(0, 1); break;
+      case 'ArrowLeft': movePlayer(-1, 0); break;
+      case 'ArrowRight': movePlayer(1, 0); break;
+    }
+  });
+
+  // Mobile controls
+  const mobileControls = document.getElementById('mobileControls');
+  const arrowUp = document.getElementById('arrowUp');
+  const arrowDown = document.getElementById('arrowDown');
+  const arrowLeft = document.getElementById('arrowLeft');
+  const arrowRight = document.getElementById('arrowRight');
+
+  // Show mobile controls if on a touch device
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+  }
+  if (isMobile()) {
+    mobileControls.style.display = 'flex';
+  }
+
+  // Touch event handlers for movement
+  arrowUp.addEventListener('touchstart', e => { e.preventDefault(); movePlayer(0, -1); });
+  arrowDown.addEventListener('touchstart', e => { e.preventDefault(); movePlayer(0, 1); });
+  arrowLeft.addEventListener('touchstart', e => { e.preventDefault(); movePlayer(-1, 0); });
+  arrowRight.addEventListener('touchstart', e => { e.preventDefault(); movePlayer(1, 0); });
+
+  // Also allow click for mobile browsers that don't fire touch events
+  arrowUp.addEventListener('click', () => movePlayer(0, -1));
+  arrowDown.addEventListener('click', () => movePlayer(0, 1));
+  arrowLeft.addEventListener('click', () => movePlayer(-1, 0));
+  arrowRight.addEventListener('click', () => movePlayer(1, 0));
+
+  // Optional: Focus input on mobile for math questions
+  questionBox.addEventListener('touchstart', () => {
+    answerInput.focus();
+  });
+</script>
+
+</body>
+</html>
